@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUITku — Dashboard Keuangan</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #3b82f6;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #090d16;
+                --card-bg: #131b2e;
+                --border: #1e293b;
+                --text-main: #f1f5f9;
+                --text-muted: #94a3b8;
+            }
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 24px 16px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 20px 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .header p {
+            margin: 4px 0 0;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 16px;
+        }
+        .card-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .card-value {
+            font-size: 26px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+        .card-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .val-income { color: var(--success); }
+        .val-expense { color: var(--danger); }
+        .section-table {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 16px;
+        }
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-income { background: rgba(22, 163, 74, 0.15); color: var(--success); }
+        .badge-expense { background: rgba(220, 38, 38, 0.15); color: var(--danger); }
+        .text-right { text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div>
+                <h1>💰 DUITku Dashboard</h1>
+                <p id="greeting">Selamat datang, Pengguna!</p>
+            </div>
+            <div>
+                <button id="refreshBtn" class="btn btn-outline" title="Refresh data">🔄 Refresh</button>
+                <a href="/transactions.html" class="btn">➕ Transaksi</a>
+            </div>
+        </header>
+
+        <!-- Summary Cards (FR-DASH-01, 02, 03) -->
+        <div class="grid-cards">
+            <!-- Saldo -->
+            <div class="card">
+                <div class="card-label">Saldo Pengguna</div>
+                <div id="balanceVal" class="card-value">Rp 0</div>
+                <div class="card-desc">Pemasukan - Pengeluaran</div>
+            </div>
+
+            <!-- Total Pemasukan -->
+            <div class="card">
+                <div class="card-label">Total Pemasukan</div>
+                <div id="incomeVal" class="card-value val-income">Rp 0</div>
+                <div class="card-desc">Total transaksi masuk</div>
+            </div>
+
+            <!-- Total Pengeluaran -->
+            <div class="card">
+                <div class="card-label">Total Pengeluaran</div>
+                <div id="expenseVal" class="card-value val-expense">Rp 0</div>
+                <div class="card-desc">Total transaksi keluar</div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions Table (FR-DASH-04) -->
+        <section class="section-table">
+            <div class="table-header">
+                <div>
+                    <h2 style="margin: 0; font-size: 18px;">Riwayat Transaksi Terbaru</h2>
+                    <span style="font-size: 12px; color: var(--text-muted);">Maksimal 10 transaksi terakhir</span>
+                </div>
+                <a href="/transactions.html" style="color: var(--primary); font-size: 13px; text-decoration: none; font-weight: 500;">
+                    Lihat Riwayat Lengkap →
+                </a>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Jenis</th>
+                            <th>Kategori</th>
+                            <th>Catatan</th>
+                            <th class="text-right">Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                Memuat data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
