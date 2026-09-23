@@ -8,7 +8,7 @@ const secret = new TextEncoder().encode(
 const COOKIE_NAME = "duitku_session";
 
 // Halaman yang membutuhkan login
-const protectedPaths = ["/dashboard"];
+const protectedPaths = ["/dashboard", "/transactions"];
 
 // Halaman yang tidak boleh diakses jika sudah login
 const authPaths = ["/login", "/register"];
@@ -50,5 +50,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/dashboard/:path*", "/login", "/register"],
+    matcher: ["/dashboard/:path*", "/transactions/:path*", "/login", "/register"],
 };
