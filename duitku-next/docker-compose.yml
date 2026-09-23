@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: duitku-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: duitku
+      POSTGRES_PASSWORD: duitku_dev
+      POSTGRES_DB: duitku
+    ports:
+      - "5432:5432"
+    volumes:
+      - duitku_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  duitku_postgres_data:
