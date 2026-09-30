@@ -6,3 +6,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+Master_Prompt_prd_nextjs.md
+.agents/rules/srs-generation.md
+SRS-Budget-Bulanan.md
