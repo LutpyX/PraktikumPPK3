@@ -1,92 +1,11 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import pool from "@/lib/db";
+import Link from "next/link";
 import LogoutButton from "./LogoutButton";
 import ThemeToggle from "./ThemeToggle";
 import DashboardClient, { DashboardData } from "./DashboardClient";
 import BudgetCard from "./BudgetCard";
-
-async function getDashboardData(userId: number, userName: string): Promise<DashboardData> {
-    try {
-        // Pastikan tabel transactions tersedia
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS transactions (
-                id SERIAL PRIMARY KEY,
-                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                type VARCHAR(10) NOT NULL CHECK (type IN ('income', 'expense')),
-                amount DECIMAL(15,2) NOT NULL,
-                category VARCHAR(100),
-                description TEXT,
-                transaction_date DATE NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-
-        // FR-DASH-02: Total Pemasukan
-        const incomeRes = await pool.query(
-            `SELECT COALESCE(SUM(amount), 0) AS total 
-             FROM transactions 
-             WHERE user_id = $1 AND type = 'income'`,
-            [userId]
-        );
-        const totalIncome = Number(incomeRes.rows[0]?.total ?? 0);
-
-        // FR-DASH-03: Total Pengeluaran
-        const expenseRes = await pool.query(
-            `SELECT COALESCE(SUM(amount), 0) AS total 
-             FROM transactions 
-             WHERE user_id = $1 AND type = 'expense'`,
-            [userId]
-        );
-        const totalExpense = Number(expenseRes.rows[0]?.total ?? 0);
-
-        // FR-DASH-01: Saldo = pemasukan - pengeluaran
-        const balance = totalIncome - totalExpense;
-
-        // FR-DASH-04: Ringkasan 10 transaksi terbaru
-        const txRes = await pool.query(
-            `SELECT id, type, amount, category, description, transaction_date 
-             FROM transactions 
-             WHERE user_id = $1 
-             ORDER BY transaction_date DESC, id DESC 
-             LIMIT 10`,
-            [userId]
-        );
-
-        const recentTransactions = txRes.rows.map((row) => ({
-            id: row.id,
-            type: row.type,
-            amount: Number(row.amount),
-            category: row.category,
-            description: row.description,
-            transaction_date: row.transaction_date instanceof Date
-                ? row.transaction_date.toISOString().split("T")[0]
-                : String(row.transaction_date).split("T")[0],
-        }));
-
-        return {
-            balance,
-            totalIncome,
-            totalExpense,
-            recentTransactions,
-            user: {
-                name: userName,
-            },
-        };
-    } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        return {
-            balance: 0,
-            totalIncome: 0,
-            totalExpense: 0,
-            recentTransactions: [],
-            user: {
-                name: userName,
-            },
-        };
-    }
-}
+import { getDashboardData } from "@/lib/dashboard";
 
 export default async function DashboardPage() {
     const user = await getCurrentUser();
@@ -95,7 +14,19 @@ export default async function DashboardPage() {
         redirect("/login");
     }
 
-    const dashboardData = await getDashboardData(user.id, user.name);
+    let dashboardData: DashboardData;
+    try {
+        dashboardData = await getDashboardData(user.id, user.name);
+    } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        dashboardData = {
+            balance: 0,
+            totalIncome: 0,
+            totalExpense: 0,
+            recentTransactions: [],
+            user: { name: user.name },
+        };
+    }
 
     return (
         <main
@@ -126,18 +57,29 @@ export default async function DashboardPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
+                        <Link
+                            href="/budgets"
+                            className="rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
+                            style={{
+                                borderColor: "var(--card-border)",
+                                color: "var(--foreground)",
+                                background: "var(--input-bg)",
+                            }}
+                        >
+                            📋 Budget
+                        </Link>
                         <ThemeToggle />
                         <LogoutButton />
                     </div>
                 </div>
 
-                {/* Dashboard Stats & Recent Transactions (Programmer 3) */}
+                {/* Dashboard Stats & Recent Transactions */}
                 <DashboardClient initialData={dashboardData} />
 
-                {/* Budget Bulan Ini (Programmer 3) */}
+                {/* Budget Bulan Ini */}
                 <BudgetCard />
 
-                {/* User Info Card (Programmer 1) */}
+                {/* User Info Card */}
                 <div
                     className="rounded-2xl border p-6 shadow-sm"
                     style={{

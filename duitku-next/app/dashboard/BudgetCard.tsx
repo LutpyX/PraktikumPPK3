@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
 interface BudgetCurrentData {
@@ -13,19 +13,54 @@ interface BudgetCurrentData {
 export default function BudgetCard() {
     const [data, setData] = useState<BudgetCurrentData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState(false);
+
+    const fetchBudget = useCallback(async () => {
+        setLoading(true);
+        setFetchError(false);
+        try {
+            const res = await fetch("/api/budgets/current");
+            if (res.ok) {
+                const result = await res.json();
+                setData(result);
+            } else {
+                console.error("BudgetCard: API returned", res.status);
+                setFetchError(true);
+            }
+        } catch (err) {
+            console.error("BudgetCard: Gagal fetch data budget:", err);
+            setFetchError(true);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        fetch("/api/budgets/current")
-            .then(res => res.json())
-            .then(setData)
-            .catch(() => {})
-            .finally(() => setLoading(false));
-    }, []);
+        fetchBudget();
+    }, [fetchBudget]);
+
+    // Listen for custom refresh event dari DashboardClient
+    useEffect(() => {
+        const handler = () => fetchBudget();
+        window.addEventListener("dashboard-refresh", handler);
+        return () => window.removeEventListener("dashboard-refresh", handler);
+    }, [fetchBudget]);
 
     if (loading) {
         return (
             <div className="rounded-2xl border p-5 shadow-sm" style={{ background: "var(--card-bg)", borderColor: "var(--card-border)" }}>
                 <p className="text-sm" style={{ color: "var(--muted)" }}>Memuat budget...</p>
+            </div>
+        );
+    }
+
+    if (fetchError) {
+        return (
+            <div className="rounded-2xl border p-5 shadow-sm" style={{ background: "var(--card-bg)", borderColor: "var(--card-border)" }}>
+                <h2 className="text-lg font-semibold mb-2" style={{ color: "var(--foreground)" }}>Budget Bulanan</h2>
+                <p className="text-sm" style={{ color: "var(--danger)" }}>
+                    Gagal memuat data budget. Periksa koneksi server.
+                </p>
             </div>
         );
     }

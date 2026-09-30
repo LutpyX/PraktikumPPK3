@@ -93,9 +93,14 @@ export async function POST(request: NextRequest) {
             { budget: result.rows[0] },
             { status: 201 }
         );
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Handle unique constraint violation (budget duplikat)
-        if (error?.code === "23505") {
+        if (
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            (error as { code: string }).code === "23505"
+        ) {
             return NextResponse.json(
                 { error: "Budget untuk bulan dan tahun ini sudah ada" },
                 { status: 409 }

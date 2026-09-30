@@ -49,6 +49,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             if (res.ok) {
                 const refreshed = await res.json();
                 setData(refreshed);
+                // Notify BudgetCard to refresh too
+                window.dispatchEvent(new Event("dashboard-refresh"));
                 setLastUpdated(
                     new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
                 );
