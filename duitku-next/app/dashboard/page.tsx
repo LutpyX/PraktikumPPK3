@@ -4,6 +4,7 @@ import pool from "@/lib/db";
 import LogoutButton from "./LogoutButton";
 import ThemeToggle from "./ThemeToggle";
 import DashboardClient, { DashboardData } from "./DashboardClient";
+import BudgetCard from "./BudgetCard";
 
 async function getDashboardData(userId: number, userName: string): Promise<DashboardData> {
     try {
@@ -132,6 +133,9 @@ export default async function DashboardPage() {
 
                 {/* Dashboard Stats & Recent Transactions (Programmer 3) */}
                 <DashboardClient initialData={dashboardData} />
+
+                {/* Budget Bulan Ini (Programmer 3) */}
+                <BudgetCard />
 
                 {/* User Info Card (Programmer 1) */}
                 <div
