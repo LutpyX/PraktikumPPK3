@@ -29,14 +29,31 @@ export async function GET() {
             );
         `);
 
-        // 3. Insert user dummy jika belum ada
+        // 3. Buat tabel budgets jika belum ada
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS budgets (
+                id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                month INT NOT NULL CHECK (month >= 1 AND month <= 12),
+                year INT NOT NULL CHECK (year >= 2020 AND year <= 2100),
+                amount DECIMAL(15,2) NOT NULL CHECK (amount > 0),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, month, year)
+            );
+        `);
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_budgets_user_month ON budgets(user_id, year, month);
+        `);
+
+        // 4. Insert user dummy jika belum ada
         await pool.query(`
             INSERT INTO users (id, name, email, password_hash)
             VALUES (1, 'Test User', 'test@mail.com', '$2b$10$wN18yD5pZz36ZtVf7j5fK.J4E1X9Y2p3rZ8v1d4z9L6w7q0s2a4m6')
             ON CONFLICT (id) DO NOTHING;
         `);
 
-        // 4. Cek apakah transactions untuk user 1 sudah ada
+        // 5. Cek apakah transactions untuk user 1 sudah ada
         const countRes = await pool.query(
             "SELECT COUNT(*) FROM transactions WHERE user_id = 1"
         );
